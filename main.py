@@ -48,7 +48,7 @@ def ocrTest():
 @timing
 def getAllText():
     reader = easyocr.Reader(['en'])
-    result = reader.readtext("C:\\Users\\aseslavinskaya\\PycharmProjects\\TextRecog\\screen.png")
+    result = reader.readtext("screen.png")
     return result
 def ocrTest_notepad():
     print("starting",time.time())
@@ -61,7 +61,7 @@ def ocrTest_notepad():
     lackey.type("hello from lackey and easyOcr")
 
     snapshot = ImageGrab.grab()
-    save_path = "C:\\Users\\aseslavinskaya\\PycharmProjects\\TextRecog\\screen.png"
+    save_path = "screen.png"
     snapshot.save(save_path)
     print("start read", time.time())
     result = getAllText()
