@@ -1,156 +1,80 @@
-import pandas as pd
-import numpy as np
-
-from glob import glob
-from tqdm.notebook import tqdm
 from datetime import datetime
-
-import matplotlib.pyplot as plt
-from PIL import Image
-import pytesseract
-import easyocr
+from glob import glob
+import Levenshtein
 import keras_ocr
-#keras_ocr=''
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from IPython.display import display
 
-def getText_tesseract(image):
-    print("---PYTESSERACT---")
-    #print(pytesseract.image_to_string(image))
-    #print(pytesseract.image_to_boxes(image))
-    #print(pytesseract.image_to_data(image))
-    results = pytesseract.image_to_data(Image.open(image)).split('\n')
-    formatted_results = []
-    for item in results[1:]:
-        record=item.split('\t')
-        if (record==[] or record==['']):
-            continue
-        level,page_num,block_num,par_num,line_num,word_num,left,top,width,height,conf,text=item.split('\t')
-        if (conf=='-1'):
-            continue
-        left=int(left)
-        right=left+int(width)
-        top=int(top)
-        bottom=top+int(height)
-        bbox=[[left,top],[right,top],[right,bottom],[left,bottom]]
-        formatted_results.append([bbox,text,conf])
-    dataFrame = pd.DataFrame(formatted_results, columns=['bbox', 'text', 'conf'])
-    display(dataFrame.to_string())
-    return dataFrame
+from getText import get_text_tesseract, get_text_easyocr,get_text_keras
 
 
-def getText_easyocr(image):
-    print("---EASYOCR---")
-    reader = easyocr.Reader(['en'])
-    results = reader.readtext(image)
-    print(results)
-    dataFrame = pd.DataFrame(results, columns=['bbox', 'text', 'conf'])
-    display(dataFrame.to_string())
-    return dataFrame
+def save_result_plot(img_fn, data_tesseract, data_easyocr, data_kerasocr):
+    figsize = [30, 20]
+    fig, axs = plt.subplots(2, 2, figsize=(figsize))
+    axs[0, 0].set_title('initial', fontsize=24)
+    axs[0, 0].imshow(plt.imread(img_fn))
+    datadata_framesrames = [data_tesseract, data_easyocr, data_kerasocr]
+    titles = ["tesseract  results", "easyocr results", "keras ocr results"]
+    positions = [[0, 1], [1, 0], [1, 1]]
+    for idx, data in enumerate(datadata_framesrames):
+        position = positions[idx]
+        title = titles[idx]
+        results = data[['text', 'bbox']].values.tolist()
+        results = [(x[0], np.array(x[1])) for x in results]
+        keras_ocr.tools.drawAnnotations(plt.imread(img_fn),
+                                        results, ax=axs[*position])
+        axs[*position].set_title(title, fontsize=24)
+    time = datetime.now().strftime("%m_%d__%H_%M_%S")
+    id = image.split("\\")[1].split(".")[0]
+    plt.tight_layout()
+    plt.savefig(f'output/result_{id}_{time}.png')
 
+def result_string(records):
+    words=[]
+    for row in records.iterrows():
+            words.append(row[1].values[0])
+    return " ".join(words)
 
-def getText_kerasocr(image):
-    print("---KERAS_OCR---")
-    pipeline = keras_ocr.pipeline.Pipeline()
-    results = pipeline.recognize([image])
-    dataFrame = pd.DataFrame(results[0], columns=['text', 'bbox'])
-    display(dataFrame.to_string())
+def process_image(image):
+    #ряд в таблице, относящийся к текущему изображению
+    image_statistic=[]
+    #id изображения
+    id = image.split("\\")[1].split(".")[0]
+    image_statistic.append(id)
 
+    #получение результатов и времени распознавания
+    data_frame_1, time1 = get_text_tesseract(image)
+    data_frame_2, time2 = get_text_easyocr(image)
+    data_frame_3, time3 = get_text_keras(image)
 
-    """
-    fig, ax = plt.subplots(figsize=(10, 10))
-    keras_ocr.tools.drawAnnotations(plt.imread(pic), results[0], ax=ax)
-    ax.set_title('Keras OCR Result Example')
-    plt.show()
-    """
-    return dataFrame
+    #добавление времени распознавания в статистику
+    image_statistic.extend([time1, time2, time3])
 
+    #получение и добавление в статистику эталонного текста из датасета
+    records = annot[annot.image_id == id][['utf8_string']]
+    text_expected = result_string(records)
+    #image_statistic.append(text_expected)
 
-def plot_compare(img_fn, easyocr_df, kerasocr_df):
-    fig, axs = plt.subplots(1, 2, figsize=(30, 20))
-
-    easy_results = easyocr_df[['text','bbox']].values.tolist()
-    easy_results = [(x[0], np.array(x[1])) for x in easy_results]
-    keras_ocr.tools.drawAnnotations(plt.imread(img_fn),
-                                    easy_results, ax=axs[0])
-    axs[0].set_title('easyocr results', fontsize=24)
-
-    keras_results = kerasocr_df[['text','bbox']].values.tolist()
-    keras_results = [(x[0], np.array(x[1])) for x in keras_results]
-    keras_ocr.tools.drawAnnotations(plt.imread(img_fn),
-                                    keras_results, ax=axs[1])
-    axs[1].set_title('keras_ocr results', fontsize=24)
-    plt.show()
-    return plt
-
-def displayImages():
-    annot = pd.read_parquet('input/textocr-text-extraction-from-images-dataset/annot.parquet')
-    imgs = pd.read_parquet('input/textocr-text-extraction-from-images-dataset/img.parquet')
-    img_fns = glob('input/textocr-text-extraction-from-images-dataset/train_val_images/train_images/*')
-
-    #display first 25 img
-    fig, axs = plt.subplots(5, 5, figsize=(20, 20))
-    axs = axs.flatten()
-    for i in range(25):
-        axs[i].imshow(plt.imread(img_fns[i]))
-        axs[i].axis('off')
-        image_id = img_fns[i].split('/')[-1].rstrip('.jpg')
-        n_annot = len(annot.query('image_id == @image_id'))
-        axs[i].set_title(f'{image_id} - {n_annot}')
-    plt.show()
-
-def displayImage(image):
-    plt.style.use('ggplot')
-    fig, ax = plt.subplots(figsize=(10, 10))
-    #ax.imshow(plt.imread(img_fns[0]))
-    #ax.axis('off')
-    ax.imshow(plt.imread(image))
-    plt.show()
-
-
-def savePlot(img_fn,data):
-    n=1
-    fig, axs = plt.subplots(1, 2, figsize=(30, 20))
-    results = data[['text','bbox']].values.tolist()
-    results=[(x[0],np.array(x[1])) for x in results]
-    keras_ocr.tools.drawAnnotations(plt.imread(img_fn),
-                                    results,ax=axs[0])
-    axs[0].set_title('results',fontsize=24)
-    name=datetime.now().strftime("%m_%d__%H_%M_%S")
-    print(name)
-    plt.savefig(f'output/result_{name}.png')
-    #plt.show()
-
-"""
-    easy_results = easyocr_df[['text','bbox']].values.tolist()
-    easy_results = [(x[0], np.array(x[1])) for x in easy_results]
-    keras_ocr.tools.drawAnnotations(plt.imread(img_fn),
-                                    easy_results, ax=axs[0])
-    axs[0].set_title('easyocr results', fontsize=24)
-
-    keras_results = kerasocr_df[['text','bbox']].values.tolist()
-    keras_results = [(x[0], np.array(x[1])) for x in keras_results]
-    keras_ocr.tools.drawAnnotations(plt.imread(img_fn),
-                                    keras_results, ax=axs[1])
-    axs[1].set_title('keras_ocr results', fontsize=24)
-    return plt
-"""
-
+    #вычисление и добавление в статистику точности распознавания
+    for data_frame in [data_frame_1,data_frame_2,data_frame_3]:
+        words=data_frame[['text']]
+        text_found=result_string(words)
+        accuracy = Levenshtein.ratio(text_found,text_expected)
+        image_statistic.append(accuracy)
+    return [image_statistic,[data_frame_1,data_frame_2,data_frame_3]]
 
 if __name__ == '__main__':
-    image = "pictures\\img_1.png"
-
-    getText_tesseract(image)
-    dataFrame1 = getText_easyocr(image)
-    dataFrame2 = getText_tesseract(image)
-    savePlot(image,dataFrame2)
-    #dataFrame2 = getText_kerasocr(image)
-    #plot_compare(image, dataFrame1, dataFrame2).savefig('output/resultPlot.png')
-
-
-
-
-
-
-
-
-
+    # image = "pictures\\img_1.png"
+    annot = pd.read_parquet('input/annot.parquet')
+    imgs = pd.read_parquet('input/img.parquet')
+    img_fns = glob('input/random_images/*')
+    table = []
+    for i in range(0, 5):
+        image = img_fns[i]
+        statistic,data_frames=process_image(image)
+        table.append(statistic)
+        save_result_plot(image,*data_frames)
+    data_frame_results = pd.DataFrame(table, columns=['id','tesseract_time', 'easyocr_time', 'keras_ocr_time','tesseract_accuracy', 'easyocr_accuracy', 'keras_ocr_accuracy'])
+    display(data_frame_results.to_string())
