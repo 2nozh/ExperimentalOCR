@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 
-from getText import get_text_tesseract, get_text_easyocr,get_text_keras
+from OcrTools import get_text_tesseract, get_text_easyocr,get_text_keras
 
 
 def save_result_plot(img_fn, data_tesseract, data_easyocr, data_kerasocr):
@@ -34,9 +34,19 @@ def save_result_plot(img_fn, data_tesseract, data_easyocr, data_kerasocr):
 def result_string(records):
     words=[]
     for row in records.iterrows():
-            words.append(row[1].values[0])
+            word = row[1].values[0]
+            word = word.strip()
+            if word!="":
+                words.append(word.upper())
     return " ".join(words)
 
+
+def get_accuracy(data_frame,text_expected):
+    words = data_frame[['text']]
+    text_found = result_string(words)
+    accuracy = Levenshtein.ratio(text_found, text_expected)
+    print(f'expecting {text_expected}, found {text_found}, accuracy {accuracy}')
+    return accuracy
 def process_image(image):
     #ряд в таблице, относящийся к текущему изображению
     image_statistic=[]
@@ -59,9 +69,7 @@ def process_image(image):
 
     #вычисление и добавление в статистику точности распознавания
     for data_frame in [data_frame_1,data_frame_2,data_frame_3]:
-        words=data_frame[['text']]
-        text_found=result_string(words)
-        accuracy = Levenshtein.ratio(text_found,text_expected)
+        accuracy = get_accuracy(data_frame,text_expected)
         image_statistic.append(accuracy)
     return [image_statistic,[data_frame_1,data_frame_2,data_frame_3]]
 
@@ -71,7 +79,7 @@ if __name__ == '__main__':
     imgs = pd.read_parquet('input/img.parquet')
     img_fns = glob('input/random_images/*')
     table = []
-    for i in range(0, 5):
+    for i in range(3, 6):
         image = img_fns[i]
         statistic,data_frames=process_image(image)
         table.append(statistic)

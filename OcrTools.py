@@ -4,7 +4,7 @@ import easyocr
 import keras_ocr
 import pandas as pd
 import pytesseract
-from IPython.display import display
+
 from PIL import Image
 
 
@@ -14,13 +14,11 @@ def get_time(func):
         result = func(*args, **kwargs)
         t2 = time.time()
         return [result, t2 - t1]
-
     return wrapper
 
 
 @get_time
 def get_text_tesseract(image):
-    print("---PYTESSERACT---")
     results = pytesseract.image_to_data(Image.open(image)).split('\n')
     formatted_results = []
     for item in results[1:]:
@@ -37,26 +35,21 @@ def get_text_tesseract(image):
         bbox = [[left, top], [right, top], [right, bottom], [left, bottom]]
         formatted_results.append([bbox, text, conf])
     data_frame = pd.DataFrame(formatted_results, columns=['bbox', 'text', 'conf'])
-    display(data_frame.to_string())
     return data_frame
 
 
 @get_time
 def get_text_easyocr(image):
-    print("---EASYOCR---")
-    reader = easyocr.Reader(['en'])
+    reader = easyocr.Reader(['en','ru'])
     results = reader.readtext(image)
     print(results)
     data_frame = pd.DataFrame(results, columns=['bbox', 'text', 'conf'])
-    display(data_frame.to_string())
     return data_frame
 
 
 @get_time
 def get_text_keras(image):
-    print("---KERAS_OCR---")
     pipeline = keras_ocr.pipeline.Pipeline()
     results = pipeline.recognize([image])
     data_frame = pd.DataFrame(results[0], columns=['text', 'bbox'])
-    display(data_frame.to_string())
     return data_frame
