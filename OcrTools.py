@@ -8,6 +8,7 @@ import pytesseract
 from PIL import Image
 
 
+
 def get_time(func):
     def wrapper(*args, **kwargs):
         t1 = time.time()
@@ -19,7 +20,7 @@ def get_time(func):
 
 @get_time
 def get_text_tesseract(image):
-    results = pytesseract.image_to_data(Image.open(image)).split('\n')
+    results = pytesseract.image_to_data(Image.open(image),lang='en+rus').split('\n')
     formatted_results = []
     for item in results[1:]:
         record = item.split('\t')
@@ -38,6 +39,7 @@ def get_text_tesseract(image):
     return data_frame
 
 
+
 @get_time
 def get_text_easyocr(image):
     reader = easyocr.Reader(['en','ru'])
@@ -46,10 +48,11 @@ def get_text_easyocr(image):
     data_frame = pd.DataFrame(results, columns=['bbox', 'text', 'conf'])
     return data_frame
 
-
 @get_time
 def get_text_keras(image):
     pipeline = keras_ocr.pipeline.Pipeline()
     results = pipeline.recognize([image])
     data_frame = pd.DataFrame(results[0], columns=['text', 'bbox'])
-    return data_frame
+    return data_frame    
+
+
