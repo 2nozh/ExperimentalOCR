@@ -1,3 +1,5 @@
 input/train_val_images
 .idea/
 /__pycache__/
+input/
+*/__pycache__
