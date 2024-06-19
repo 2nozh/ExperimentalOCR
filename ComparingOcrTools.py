@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 
-from OcrTools import get_text_tesseract, get_text_easyocr,get_text_keras
+from OcrIntegrationModules.OcrTools import get_text_tesseract, get_text_easyocr,get_text_keras
 
 config = configparser.ConfigParser()
 config.read("settings.ini")

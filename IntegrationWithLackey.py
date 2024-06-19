@@ -1,10 +1,11 @@
 import lackey
 import configparser
-import Click
+from DataProcessingModules import Click
 import time
 
 def tesseract_example():
     print("waiting for app to open")
+    time.sleep(5)
     lackey.wait("pictures\\ToDoList_Landing.png")
     print("opened successfully")
     #lackey.click("pictures\\maximize.png")
@@ -13,8 +14,7 @@ def tesseract_example():
     Click.by_text('Добавить', 0)
     time.sleep(2)
     lackey.type("test task")
-    #click_by_text('Добавить', 1)
-    lackey.click("pictures\ToDoList_Button.png")   
+    lackey.click("pictures\ToDoList_Button.png")
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()

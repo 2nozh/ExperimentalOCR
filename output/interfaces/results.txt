@@ -1,0 +1,6 @@
+      id  tesseract_time  easyocr_time  keras_ocr_time tesseract_accuracy easyocr_accuracy keras_ocr_accuracy
+0  img_1        1.291931      9.576445       16.379276                  -                -                  -
+1  img_2        0.539711      8.791274       13.913825                  -                -                  -
+2  img_3        0.578043     10.732862       17.477768                  -                -                  -
+3  img_4        0.928779     12.805377       20.041467                  -                -                  -
+4  img_5        0.203609      3.706991        6.262561                  -                -                  -
