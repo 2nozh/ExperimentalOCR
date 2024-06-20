@@ -19,7 +19,7 @@ def get_time(func):
 
 @get_time
 def get_text_tesseract(image):
-    #eng+rus
+    # eng+rus
     results = pytesseract.image_to_data(Image.open(image), lang='eng').split('\n')
     formatted_results = []
     for item in results[1:]:
@@ -41,7 +41,7 @@ def get_text_tesseract(image):
 
 @get_time
 def get_text_easyocr(image):
-    #'en', 'ru'
+    # 'en', 'ru'
     reader = easyocr.Reader(['en'])
     results = reader.readtext(image)
     print(results)
