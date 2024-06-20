@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from DataProcessingModules.BboxProcessing import get_text_detected
-from OcrIntegrationModules.OcrTools import get_text_tesseract, get_text_easyocr, get_text_keras
+from OcrIntegrationModules.Ocr import Ocr
 
 config = configparser.ConfigParser()
 config.read("settings.ini")
@@ -53,12 +53,16 @@ def process_image(image, annot=[]):
     image_statistic.append(id)
 
     # получение результатов и времени распознавания
-    data_frame_1, time1 = get_text_tesseract(image)
-    data_frame_2, time2 = get_text_easyocr(image)
-    data_frame_3, time3 = get_text_keras(image)
-
+    ocr = Ocr()
+    results = ocr.get_and_print_dataframes(image)
+    dataframes = []
+    times = []
+    for detection_variant_result in results:
+        dataframe, time = detection_variant_result
+        dataframes.append(dataframe)
+        times.append(time)
     # добавление времени распознавания в статистику
-    image_statistic.extend([time1, time2, time3])
+    image_statistic.extend(times)
     if annot != []:
         # получение и добавление в статистику эталонного текста из датасета
         records = annot[annot.image_id == id][['utf8_string']]
@@ -66,10 +70,10 @@ def process_image(image, annot=[]):
         # image_statistic.append(text_expected)
 
         # вычисление и добавление в статистику точности распознавания
-        for data_frame in [data_frame_1, data_frame_2, data_frame_3]:
+        for data_frame in dataframes:
             accuracy = get_accuracy(data_frame, text_expected)
             image_statistic.append(accuracy)
     else:
         for _ in range(0, 3):
             image_statistic.append("-")
-    return [image_statistic, [data_frame_1, data_frame_2, data_frame_3]]
+    return [image_statistic, dataframes]
