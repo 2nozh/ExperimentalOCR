@@ -20,7 +20,7 @@ def get_time(func):
 @get_time
 def get_text_tesseract(image):
     # eng+rus
-    results = pytesseract.image_to_data(Image.open(image), lang='eng').split('\n')
+    results = pytesseract.image_to_data(Image.open(image), lang='eng+rus').split('\n')
     formatted_results = []
     for item in results[1:]:
         record = item.split('\t')
