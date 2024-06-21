@@ -39,4 +39,4 @@ def process_images_from_folder(folder):
 
 
 if __name__ == '__main__':
-    process_images_from_folder(f'{root}/input/interface')
+    process_images_from_folder(f'{root}/input/toTest')

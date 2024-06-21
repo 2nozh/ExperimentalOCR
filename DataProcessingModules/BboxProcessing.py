@@ -24,7 +24,21 @@ def get_matching_bboxes(resultSet, text):
         bbox = row[1].values[0]
         bboxes.append(bbox)
     return bboxes
-
+def highlight_matching_bboxes(resultSet, text):
+    result = resultSet.loc[resultSet['text'].str.contains(text)]
+    bboxes = []
+    for row in result.iterrows():
+        bbox = row[1].values[0]
+        bboxes.append(bbox)
+        match = lackey.Match(0.9, lackey.Location(10, 10),
+                             [bbox[0], [(bbox[1][0] - bbox[0][0]), (bbox[2][1] - bbox[0][1])]])
+        match.highlight(highlight_for, "red")
+    return bboxes
+def get_bbox_by_num(bboxes,num):
+    if len(bboxes) > 0:
+        return bboxes[num]
+    else:
+        return []
 
 def get_bbox(bboxes, num=0):
     if len(bboxes) > 0:

@@ -42,7 +42,7 @@ def get_text_tesseract(image):
 @get_time
 def get_text_easyocr(image):
     # 'en', 'ru'
-    reader = easyocr.Reader(['en'])
+    reader = easyocr.Reader(['en','ru'])
     results = reader.readtext(image)
     print(results)
     data_frame = pd.DataFrame(results, columns=['bbox', 'text', 'conf'])
