@@ -27,7 +27,8 @@ def tesseract_example():
 def real_time_tesseract_example():
     config = configparser.ConfigParser()
     config.read("settings.ini")
-    app_path = config.get("Paths", "toDoList_path")
+    #app_path = config.get("Paths", "toDoList_path")
+    app_path = "C:\\Users\\aseslavinskaya\\AppData\\Local\\Programs\\todoist\\Todoist.exe"
     print('default app is "toDoList", to change, type path to exe file:')
     app= input()
     if app=='':
@@ -38,19 +39,19 @@ def real_time_tesseract_example():
     print('ready for commands, write "quit" to exit')
     text=''
     while text!='quit':
-        try:
-            print("write text to search:")
-            text = input()
-            bboxes=Click.highlight_variants(text)
-            if len(bboxes)>0:
-                print("write variant number to click (0 to skip):")
-                num=int(input())
-                if num>0:
-                    Click.variant_num(bboxes,num-1)
-            else:
-                print("text was not found,try again")
-        except:
-            print("something went wrong")
+        #try:
+        print("write text to search:")
+        text = input()
+        bboxes=Click.highlight_variants(text)
+        if len(bboxes)>0:
+            print("write variant number to click (0 to skip):")
+            num=int(input())
+            if num>0:
+                Click.variant_num(bboxes,num-1)
+        else:
+            print("text was not found,try again")
+        #except:
+         #   print("something went wrong")
 
 
 if __name__ == '__main__':
